@@ -1,0 +1,39 @@
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate.d/
+
+# Terragrunt
+.terragrunt-cache/
+terragrunt.hcl.backup
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.iml
+.history/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Backup files
+*.backup
+*.bak
+
+# Environment files
+.env
+.env.local
+
+# Atlantis
+atlantis.yaml.backup
+
