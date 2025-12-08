@@ -1,0 +1,127 @@
+# Atlantis Configuration
+# This file configures Atlantis to work with Terragrunt
+
+version: 3
+
+# Autoplan configuration
+autoplan:
+  when_modified:
+    - "*.hcl"
+    - "*.tf"
+    - "*.tfvars"
+  enabled: true
+
+# Projects configuration
+projects:
+  # Dev environment projects
+  - name: dev-eu-west-2-app1
+    dir: live/dev/eu-west-2/app1
+    workflow: terragrunt
+    autoplan:
+      enabled: true
+    apply_requirements:
+      - approved
+      - mergeable
+
+  - name: dev-eu-west-2-app1-vpc
+    dir: live/dev/eu-west-2/app1/vpc
+    workflow: terragrunt
+    autoplan:
+      enabled: true
+    apply_requirements:
+      - approved
+      - mergeable
+    depends_on:
+      - dev-eu-west-2-app1
+
+  # Staging environment projects
+  - name: staging-eu-west-2-app1
+    dir: live/staging/eu-west-2/app1
+    workflow: terragrunt
+    autoplan:
+      enabled: true
+    apply_requirements:
+      - approved
+      - mergeable
+
+  - name: staging-eu-west-2-app1-vpc
+    dir: live/staging/eu-west-2/app1/vpc
+    workflow: terragrunt
+    autoplan:
+      enabled: true
+    apply_requirements:
+      - approved
+      - mergeable
+    depends_on:
+      - staging-eu-west-2-app1
+
+  # Production environment projects
+  - name: prod-eu-west-2-app1
+    dir: live/prod/eu-west-2/app1
+    workflow: terragrunt
+    autoplan:
+      enabled: true
+    apply_requirements:
+      - approved
+      - mergeable
+      - approved_reviewers
+
+  - name: prod-eu-west-2-app1-vpc
+    dir: live/prod/eu-west-2/app1/vpc
+    workflow: terragrunt
+    autoplan:
+      enabled: true
+    apply_requirements:
+      - approved
+      - mergeable
+      - approved_reviewers
+    depends_on:
+      - prod-eu-west-2-app1
+
+  - name: prod-eu-west-2-app1-eks
+    dir: live/prod/eu-west-2/app1/eks
+    workflow: terragrunt
+    autoplan:
+      enabled: true
+    apply_requirements:
+      - approved
+      - mergeable
+      - approved_reviewers
+    depends_on:
+      - prod-eu-west-2-app1-vpc
+
+# Workflows
+workflows:
+  terragrunt:
+    plan:
+      steps:
+        # Validate environment
+        - run: bash ci/ensure-env.sh $ATLANTIS_WORKING_DIR
+        # Check backend
+        - run: bash ci/check-backend.sh $ATLANTIS_WORKING_DIR
+        # Initialize Terragrunt
+        - init:
+            extra_args: ["-upgrade"]
+        # Run Terragrunt plan
+        - run: terragrunt plan -out=$PLANFILE
+        # Show plan output
+        - run: terragrunt show $PLANFILE
+
+    apply:
+      steps:
+        # Validate environment
+        - run: bash ci/ensure-env.sh $ATLANTIS_WORKING_DIR
+        # Check backend
+        - run: bash ci/check-backend.sh $ATLANTIS_WORKING_DIR
+        # Apply the plan
+        - run: terragrunt apply $PLANFILE
+
+# Policy check configuration (optional: requires OPA/conftest)
+# policy_check:
+#   enabled: true
+
+# Allowed regex patterns for project names
+allowed_regexp_prefixes:
+  - "dev-"
+  - "staging-"
+  - "prod-"
