@@ -1,0 +1,109 @@
+name: Terragrunt Apply
+
+on:
+  push:
+    paths:
+      - 'infra/**'
+    branches:
+      - main
+      - develop
+
+env:
+  AWS_REGION: eu-west-2
+  TF_STATE_BUCKET: sonal-terragrunt-state-bucket
+
+jobs:
+  apply:
+    name: Apply - ${{ matrix.env }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    strategy:
+      matrix:
+        include:
+          - env: dev
+            branch: develop
+          - env: staging
+            branch: develop
+          - env: prod
+            branch: main
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        if: github.ref == 'refs/heads/${{ matrix.branch }}'
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/terragrunt-${{ matrix.env }}-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terragrunt
+        uses: autero1/action-terragrunt@v3
+        with:
+          terragrunt-version: 0.94.0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine changed directories
+        id: changes
+        run: |
+          # Find all changed Terragrunt directories in the last commit
+          CHANGED_DIRS=$(git diff --name-only HEAD~1 HEAD | \
+            grep -E 'infra/live/.*/.*/.*/.*\.hcl$' | \
+            sed 's|infra/live/\([^/]*\)/\([^/]*\)/\([^/]*\)/.*\.hcl$|infra/live/\1/\2/\3|' | \
+            sort -u | \
+            grep -E "infra/live/${{ matrix.env }}/" || true)
+          
+          if [ -z "$CHANGED_DIRS" ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes detected for ${{ matrix.env }} environment"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "dirs<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGED_DIRS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Terragrunt Apply
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          # Set environment variable for validation
+          export TF_VAR_env=${{ matrix.env }}
+          export AWS_ROLE_ARN=arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/terragrunt-${{ matrix.env }}-role
+          
+          # Run apply for each changed directory
+          while IFS= read -r dir; do
+            if [ -n "$dir" ] && [ -f "$dir/terragrunt.hcl" ]; then
+              echo "Applying: $dir"
+              cd "$dir"
+              
+              # Initialize and plan first
+              terragrunt init
+              terragrunt plan -out=tfplan
+              
+              # Apply
+              terragrunt apply -auto-approve tfplan
+              
+              cd - > /dev/null
+            fi
+          done <<< "${{ steps.changes.outputs.dirs }}"
+        env:
+          TF_STATE_BUCKET: ${{ env.TF_STATE_BUCKET }}
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[AUTO] Terragrunt Apply Failed - ${{ matrix.env }}`,
+              body: `Terragrunt apply failed for ${{ matrix.env }} environment.\n\nCommit: ${context.sha}\n\nPlease review the workflow logs.`
+            });
