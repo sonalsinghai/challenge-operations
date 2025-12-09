@@ -12,83 +12,50 @@ autoplan:
   enabled: true
 
 # Projects configuration
+# Only projects with dependencies or special requirements need explicit definitions
+# Others can be auto-discovered, but explicit is clearer for dependencies
 projects:
-  # Dev environment projects
+  # Base projects (no dependencies)
   - name: dev-eu-west-2-app1
     dir: live/dev/eu-west-2/app1
     workflow: terragrunt
-    autoplan:
-      enabled: true
-    apply_requirements:
-      - approved
-      - mergeable
+    apply_requirements: [approved, mergeable]
 
-  - name: dev-eu-west-2-app1-vpc
-    dir: live/dev/eu-west-2/app1/vpc
-    workflow: terragrunt
-    autoplan:
-      enabled: true
-    apply_requirements:
-      - approved
-      - mergeable
-    depends_on:
-      - dev-eu-west-2-app1
-
-  # Staging environment projects
   - name: staging-eu-west-2-app1
     dir: live/staging/eu-west-2/app1
     workflow: terragrunt
-    autoplan:
-      enabled: true
-    apply_requirements:
-      - approved
-      - mergeable
+    apply_requirements: [approved, mergeable]
+
+  - name: prod-eu-west-2-app1
+    dir: live/prod/eu-west-2/app1
+    workflow: terragrunt
+    apply_requirements: [approved, mergeable, approved_reviewers]
+
+  # VPC projects (depend on base app1)
+  - name: dev-eu-west-2-app1-vpc
+    dir: live/dev/eu-west-2/app1/vpc
+    workflow: terragrunt
+    apply_requirements: [approved, mergeable]
+    depends_on: [dev-eu-west-2-app1]
 
   - name: staging-eu-west-2-app1-vpc
     dir: live/staging/eu-west-2/app1/vpc
     workflow: terragrunt
-    autoplan:
-      enabled: true
-    apply_requirements:
-      - approved
-      - mergeable
-    depends_on:
-      - staging-eu-west-2-app1
-
-  # Production environment projects
-  - name: prod-eu-west-2-app1
-    dir: live/prod/eu-west-2/app1
-    workflow: terragrunt
-    autoplan:
-      enabled: true
-    apply_requirements:
-      - approved
-      - mergeable
-      - approved_reviewers
+    apply_requirements: [approved, mergeable]
+    depends_on: [staging-eu-west-2-app1]
 
   - name: prod-eu-west-2-app1-vpc
     dir: live/prod/eu-west-2/app1/vpc
     workflow: terragrunt
-    autoplan:
-      enabled: true
-    apply_requirements:
-      - approved
-      - mergeable
-      - approved_reviewers
-    depends_on:
-      - prod-eu-west-2-app1
+    apply_requirements: [approved, mergeable, approved_reviewers]
+    depends_on: [prod-eu-west-2-app1]
 
+  # EKS project (depends on VPC)
   - name: prod-eu-west-2-app1-eks
     dir: live/prod/eu-west-2/app1/eks
     workflow: terragrunt
-    autoplan:
-      enabled: true
-    apply_requirements:
-      - approved
-      - mergeable
-      - approved_reviewers
-    depends_on:
-      - prod-eu-west-2-app1-vpc
+    apply_requirements: [approved, mergeable, approved_reviewers]
+    depends_on: [prod-eu-west-2-app1-vpc]
 
 # Workflows
 workflows:
