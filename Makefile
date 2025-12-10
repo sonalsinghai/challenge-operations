@@ -2,7 +2,6 @@
 
 GITHUB_REPO ?= sonalsinghai/challenge-operations
 OPEN_TOFU_VERSION ?= 1.10.7
-TERRAFORM_VERSION ?= 1.10.0
 TERRAGRUNT_VERSION ?= 0.93.13
 
 help: ## Show this help message
@@ -18,7 +17,7 @@ bootstrap: ## Run bootstrap module to create AWS resources
 		exit 1; \
 	fi
 	cd infra/bootstrap && \
-	export AWS_PROFILE=sonal-aws && \
+	export AWS_PROFILE=challange-operations-aws-profile && \
 	tenv opentofu install $(OPEN_TOFU_VERSION) && \
 	tenv opentofu use $(OPEN_TOFU_VERSION) && \
 	tofu init && \
@@ -31,7 +30,7 @@ bootstrap-apply:
 		exit 1; \
 	fi
 	cd infra/bootstrap && \
-	export AWS_PROFILE=sonal-aws && \
+	export AWS_PROFILE=challange-operations-aws-profile && \
 	tenv opentofu use $(OPEN_TOFU_VERSION) && \
 	tofu apply -var="github_repo=$(GITHUB_REPO)"
 
@@ -68,7 +67,7 @@ validate: ## Validate Terragrunt HCL syntax
 
 fmt: ## Format all Terraform and Terragrunt files  
 	@echo "Formatting Terraform files..."
-	@TENV_AUTO_INSTALL=true tenv tofu install $(TERRAFORM_VERSION) >/dev/null 2>&1 || true
+	@TENV_AUTO_INSTALL=true tenv tofu install $(OPEN_TOFU_VERSION) >/dev/null 2>&1 || true
 	@TENV_AUTO_INSTALL=true tenv tofu use $(TERRAFORM_VERSION) >/dev/null 2>&1 || true
 	@find infra -name "*.tf" ! -path "*/.history/*" ! -path "*/.terragrunt-cache/*" -exec terraform fmt {} \; 2>/dev/null || true
 	@echo "Formatting Terragrunt files..."

@@ -14,13 +14,10 @@ Before using Terragrunt, you must bootstrap the infrastructure:
 ```shell
 cd infra/bootstrap
 
-export AWS_PROFILE=sonal-aws
+export AWS_PROFILE=challange-operations-aws-profile
 
 # Verify it's active
 aws sts get-caller-identity
-
-# Now run your Terragrunt commands
-tofu plan -var="github_repo=sonalsinghai/challenge-operations"
 
 tenv opentofu install 1.10.7
 tenv opentofu use 1.10.7
@@ -44,7 +41,7 @@ tofu apply -var="github_repo=sonalsinghai/challenge-operations"
 ## Variables
 
 - `github_repo`: Your GitHub repository in format `owner/repo-name` (required)
-- `state_bucket_name`: Name of the S3 bucket (default: `terragrunt-state-bucket`)
+- `state_bucket_name`: Name of the S3 bucket (default: `challenge-operations-terragrunt-state-bucket`)
 - `aws_region`: AWS region (default: `eu-west-2`)
 - `environments`: List of environments (default: `["dev", "staging", "prod"]`)
 

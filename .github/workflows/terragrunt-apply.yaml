@@ -10,7 +10,7 @@ on:
 
 env:
   AWS_REGION: eu-west-2
-  TF_STATE_BUCKET: sonal-terragrunt-state-bucket
+  TF_STATE_BUCKET: challenge-operations-terragrunt-state-bucket
 
 jobs:
   apply:
