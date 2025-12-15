@@ -5,6 +5,15 @@
 # Include root configuration
 include "root" {
   path = find_in_parent_folders("root.hcl")
+  expose = true  # Expose root locals to this file
+}
+
+# Define locals to access included root values
+locals {
+  # Access root.hcl locals through include.root.locals
+  env        = include.root.locals.env
+  aws_region = include.root.locals.region
+  app_name   = include.root.locals.app_name
 }
 
 # Dependency: EKS requires VPC to be created first
@@ -30,9 +39,9 @@ terraform {
 
 # EKS-specific inputs
 inputs = {
-  env        = "prod"
-  aws_region = "eu-west-2"
-  app_name   = "app1"
+  env        = local.env
+  aws_region = local.aws_region
+  app_name   = local.app_name
 
   # VPC configuration from dependency
   vpc_id     = dependency.vpc.outputs.vpc_id             # VPC where cluster runs
@@ -46,7 +55,7 @@ inputs = {
   node_group_max_size       = 6            # Max for auto-scaling
 
   tags = {
-    Environment = "prod"
+    Environment = local.env
     CostCenter  = "engineering"
     Team        = "platform"
   }

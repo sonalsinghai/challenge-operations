@@ -5,6 +5,15 @@
 # Include root configuration (provider, backend, hooks, common inputs)
 include "root" {
   path = find_in_parent_folders("root.hcl") # Searches up the tree for root.hcl
+  expose = true  # Expose root locals to this file
+}
+
+# Define locals to access included root values
+locals {
+  # Access root.hcl locals through include.root.locals
+  env        = include.root.locals.env
+  aws_region = include.root.locals.region
+  app_name   = include.root.locals.app_name
 }
 
 # Module source - points to the "common" module

@@ -5,6 +5,15 @@
 # Include root configuration
 include "root" {
   path = find_in_parent_folders("root.hcl")
+  expose = true  # Expose root locals to this file
+}
+
+# Define locals to access included root values
+locals {
+  # Access root.hcl locals through include.root.locals
+  env        = include.root.locals.env
+  aws_region = include.root.locals.region
+  app_name   = include.root.locals.app_name
 }
 
 # Module source - VPC module
@@ -14,13 +23,13 @@ terraform {
 
 # VPC-specific inputs
 inputs = {
-  env        = "staging"
-  aws_region = "eu-west-2"
-  app_name   = "app1"
+  env        = local.env
+  aws_region = local.aws_region
+  app_name   = local.app_name
   vpc_cidr   = "10.2.0.0/16" # Staging VPC CIDR block
 
   tags = {
-    Environment = "staging"
+    Environment = local.env
     CostCenter  = "engineering"
     Team        = "platform"
   }

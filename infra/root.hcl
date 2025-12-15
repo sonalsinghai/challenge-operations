@@ -55,12 +55,12 @@ remote_state {
 
 # Local Variables - Auto-extracted from Directory Path
 locals {
-  terragrunt_dir = get_terragrunt_dir() # Current directory path
+  terragrunt_dir = get_terragrunt_dir() # Current directory path, e.g., infra/live/prod/eu-west-2/app1/eks
 
   # State bucket configuration - centralized
-  state_bucket_name = get_env("TF_STATE_BUCKET", "challenge-operations-terragrunt-state-bucket")
+  state_bucket_name = get_env("TF_STATE_BUCKET", "sonal-terragrunt-state-bucket")
 
-  # Extract environment name from path (dev/staging/prod)
+  # Extract environment name (dev/staging/prod) from path (infra/live/prod/eu-west-2/app1/eks)
   env_match = regex(".*/live/([^/]+)/", local.terragrunt_dir)
   env       = try(local.env_match[0], "unknown")
 
@@ -68,8 +68,12 @@ locals {
   region_match = regex(".*/live/[^/]+/([^/]+)/", local.terragrunt_dir)
   region       = try(local.region_match[0], "eu-west-2")
 
+  # Extract app_name region from path
+  app_name_match = regex(".*/live/[^/]+/[^/]+/([^/]+)/*", local.terragrunt_dir)
+  app_name       = try(local.app_name_match[0], "unknown")
+
   # Extract application name (last directory in path)
-  app_name = basename(local.terragrunt_dir)
+  module_name = basename(local.terragrunt_dir)
 
   # Tags applied to all resources via provider default_tags
   common_tags = {
@@ -87,7 +91,7 @@ terraform {
   # Prevents accidentally running commands in wrong environment
   before_hook "validate_environment" {
     commands     = ["init", "plan", "apply", "destroy"]
-    execute      = ["bash", "${get_parent_terragrunt_dir()}/ci/ensure-env.sh", get_terragrunt_dir()]
+    execute      = ["bash", "${get_parent_terragrunt_dir()}/ci/ensure-env.sh", get_terragrunt_dir()]  # e.g., infra/live/prod/eu-west-2/app1
     run_on_error = false # Stop if validation fails
   }
 

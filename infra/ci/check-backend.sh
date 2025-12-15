@@ -2,6 +2,7 @@
 # Backend validation script
 # Ensures the S3 backend and DynamoDB table exist before operations
 
+# Exit immediately if a command exits with a non-zero status, treat unset variables as errors, and fail if any command in a pipeline fails
 set -euo pipefail
 
 # Skip if SKIP_BACKEND_CHECK is set (for validate command)
@@ -26,7 +27,7 @@ if [[ ! "$TERRAGRUNT_DIR" =~ live/([^/]+)/ ]]; then
 fi
 
 ENV="${BASH_REMATCH[1]}"
-STATE_BUCKET="${TF_STATE_BUCKET:-challenge-operations-terragrunt-state-bucket}"
+STATE_BUCKET="${TF_STATE_BUCKET:-sonal-terragrunt-state-bucket}"
 DYNAMODB_TABLE="${ENV}-terraform-locks"
 AWS_REGION="${AWS_REGION:-${AWS_DEFAULT_REGION:-eu-west-2}}"
 
