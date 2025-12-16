@@ -10,7 +10,7 @@ on:
 
 env:
   AWS_REGION: eu-west-2
-  TF_STATE_BUCKET: challenge-operations-terragrunt-state-bucket
+  TF_STATE_BUCKET: sonal-terragrunt-state-bucket
 
 jobs:
   apply:
@@ -74,7 +74,6 @@ jobs:
         if: steps.changes.outputs.changed == 'true'
         run: |
           # Set environment variable for validation
-          export TF_VAR_env=${{ matrix.env }}
           export AWS_ROLE_ARN=arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/terragrunt-${{ matrix.env }}-role
           
           # Run apply for each changed directory

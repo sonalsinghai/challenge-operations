@@ -41,7 +41,7 @@ tofu apply -var="github_repo=sonalsinghai/challenge-operations"
 ## Variables
 
 - `github_repo`: Your GitHub repository in format `owner/repo-name` (required)
-- `state_bucket_name`: Name of the S3 bucket (default: `challenge-operations-terragrunt-state-bucket`)
+- `state_bucket_name`: Name of the S3 bucket (default: `sonal-terragrunt-state-bucket`)
 - `aws_region`: AWS region (default: `eu-west-2`)
 - `environments`: List of environments (default: `["dev", "staging", "prod"]`)
 

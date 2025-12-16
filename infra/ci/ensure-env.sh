@@ -3,6 +3,7 @@
 # Ensures that the environment being targeted matches the folder structure
 # and prevents cross-environment state corruption
 
+# Exit immediately if a command exits with a non-zero status, treat unset variables as errors, and fail if any command in a pipeline fails
 set -euo pipefail
 
 # Colors for output
@@ -22,6 +23,7 @@ if [[ ! "$TERRAGRUNT_DIR" =~ live/([^/]+)/ ]]; then
   exit 1
 fi
 
+# Extract the environment name (dev, staging, prod) from the matched regex group
 FOLDER_ENV="${BASH_REMATCH[1]}"
 
 # Validate environment name
@@ -32,19 +34,6 @@ if [[ ! "$FOLDER_ENV" =~ ^(dev|staging|prod)$ ]]; then
 fi
 
 echo -e "${GREEN}✓ Environment from folder: $FOLDER_ENV${NC}"
-
-# Check TF_VAR_env if set
-if [ -n "${TF_VAR_env:-}" ]; then
-  if [ "$TF_VAR_env" != "$FOLDER_ENV" ]; then
-    echo -e "${RED}ERROR: Environment mismatch!${NC}"
-    echo "  Folder environment: $FOLDER_ENV"
-    echo "  TF_VAR_env: $TF_VAR_env"
-    echo ""
-    echo "Please unset TF_VAR_env or set it to match the folder environment."
-    exit 1
-  fi
-  echo -e "${GREEN}✓ TF_VAR_env matches folder environment${NC}"
-fi
 
 # Validate AWS_ROLE_ARN if set (OIDC scenario)
 if [ -n "${AWS_ROLE_ARN:-}" ]; then

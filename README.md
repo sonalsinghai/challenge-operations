@@ -16,7 +16,6 @@ The solution implements multiple layers of protection:
 1. **Path-Based Environment Detection**: Environment is automatically extracted from directory structure
    - **Automatic environment detection** from directory path (`live/<env>/<region>/<app>`)
    - **Pre-Command Validation Hooks**: Scripts run before every Terraform operation to validate environment
-   - **TF_VAR_env validation** ensures environment variables match directory structure
    - **AWS_ROLE_ARN validation** ensures IAM role matches environment
 2. **IAM Role-Based Access Control**: Separate IAM roles per environment with OIDC integration
 3. **CI/CD Integration**: GitHub Actions workflows enforce branch-based environment restrictions
@@ -73,6 +72,7 @@ aws sts get-caller-identity  # Should show your AWS account
 # Connect to AWS
 export AWS_PROFILE=challange-operations-aws-profile
 export AWS_REGION=eu-west-2
+aws login
 aws sts get-caller-identity
 
 # Set Github Repo (required to create role for OIDC)
@@ -98,13 +98,14 @@ tofu output
 # Connect to AWS
 export AWS_PROFILE=challange-operations-aws-profile
 export AWS_REGION=eu-west-2
+aws login
 aws sts get-caller-identity
 
 # Set Github Repo (required to create role for OIDC)
 export GITHUB_REPO="sonalsinghai/challenge-operations"
 
 # Set state bucket (from bootstrap output)
-export TF_STATE_BUCKET="challenge-operations-terragrunt-state-bucket"
+export TF_STATE_BUCKET="sonal-terragrunt-state-bucket"
 ```
 
 ### Step 3: Test Locally (Plan Only)
@@ -210,7 +211,6 @@ before_hook "validate_environment" {
 
 The `ensure-env.sh` script:
 - Extracts environment from directory path
-- Validates `TF_VAR_env` matches (if set)
 - Validates `AWS_ROLE_ARN` matches environment
 - Enforces branch restrictions in CI/CD
 
@@ -239,10 +239,13 @@ Before `init`, `plan`, or `apply`, the backend validation script:
    cd infra/live/dev/eu-west-2/app1
    terragrunt plan
    
-   # Should fail
-   cd infra/live/dev/eu-west-2/app1
-   export TF_VAR_env=prod
-   terragrunt plan  # Error: Environment mismatch
+   # Should pass
+   cd infra/live/prod/eu-west-2/app1
+   terragrunt plan
+   
+   # Should fail, prd is not a valid one
+   cd infra/live/prd/eu-west-2/app1
+   terragrunt plan
    ```
 
 2. **Test Backend Validation**
